@@ -1,61 +1,62 @@
 // 基础数据类型
-export type FieldType = 'string' | 'number' | 'date' | 'boolean';
+export type FieldType = 'number' | 'string' | 'date' | 'boolean';
 
 // 字段定义
 export interface Field {
-  id: string;
-  name: string;
+  key: string;
   type: FieldType;
-  uniqueValues: number;
-  sampleValues: any[];
+  uniqueValues?: number;
+  sampleValues?: any[];
 }
 
 // 数据集
 export interface Dataset {
-  id: string;
   name: string;
   fields: Field[];
-  rows: any[][];
-  rowCount: number;
-  createdAt: Date;
-  updatedAt: Date;
+  rows: Record<string, any>[]; // 解析后的行
 }
 
 // 图表类型
-export type ChartType = 'line' | 'bar' | 'area' | 'scatter' | 'pie' | 'radar';
-
-// 字段角色
-export type FieldRole = 'x' | 'y' | 'series' | 'category' | 'value' | 'dimension';
+export type ChartKind = 'line' | 'bar' | 'area' | 'scatter' | 'pie' | 'radar';
 
 // 字段映射
-export interface FieldMapping {
-  [role: string]: string; // role -> fieldId
+export interface Mapping {
+  x?: string;
+  y?: string;
+  series?: string;
+  value?: string;      // pie/radar
 }
 
 // 图表配置
 export interface ChartConfig {
-  id: string;
-  type: ChartType;
-  title: string;
-  subtitle?: string;
-  fieldMapping: FieldMapping;
-  style: ChartStyle;
-  data: any[];
+  kind: ChartKind;
+  mapping: Mapping;
+  style?: {
+    title?: string;
+    legend?: boolean;
+    label?: boolean;
+    colorScheme?: 'default' | 'schemeA' | 'schemeB';
+    xLabelRotate?: 0 | 30 | 45 | 60 | 90;
+    decimals?: 0 | 1 | 2 | 3;
+  };
+  transform?: {
+    filter?: Array<{ field: string; op: 'eq'|'ne'|'gt'|'lt'|'ge'|'le'|'in'|'notin'; value: any | any[] }>;
+    sort?: { field: string; order: 'asc'|'desc' }[];
+    aggregate?: { by?: string[]; field: string; op: 'sum'|'avg'|'min'|'max'|'count' };
+  };
 }
 
-// 图表样式
-export interface ChartStyle {
-  showLegend: boolean;
-  showDataLabels: boolean;
-  showGrid: boolean;
-  colorScheme: string;
-  fontSize: number;
-  margin: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
+// 画布布局（v2+）
+export interface Dashboard {
+  id: string;
+  title: string;
+  items: Array<{
+    id: string;
+    chart: ChartConfig;
+    position: { x: number; y: number; w: number; h: number }; // grid 单位
+  }>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // 导出格式

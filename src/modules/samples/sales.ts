@@ -1,108 +1,144 @@
-import { Dataset, Field } from '@/app/types';
+import { Field, DataRow } from '@/app/types';
 
-/**
- * 销售数据演示集
- */
-export const sampleSalesData: Dataset = {
-  id: 'sample_sales',
-  name: '销售数据演示',
-  fields: [
-    {
-      id: 'field_0',
-      name: '日期',
-      type: 'date',
-      uniqueValues: 12,
-      sampleValues: ['2024-01-01', '2024-02-01', '2024-03-01'],
-    },
-    {
-      id: 'field_1',
-      name: '产品类别',
-      type: 'string',
-      uniqueValues: 4,
-      sampleValues: ['电子产品', '服装', '食品', '家居'],
-    },
-    {
-      id: 'field_2',
-      name: '销售额',
-      type: 'number',
-      uniqueValues: 48,
-      sampleValues: [12000, 8500, 15600, 9200],
-    },
-    {
-      id: 'field_3',
-      name: '数量',
-      type: 'number',
-      uniqueValues: 48,
-      sampleValues: [120, 85, 156, 92],
-    },
-    {
-      id: 'field_4',
-      name: '地区',
-      type: 'string',
-      uniqueValues: 3,
-      sampleValues: ['华东', '华南', '华北'],
-    },
-    {
-      id: 'field_5',
-      name: '是否促销',
-      type: 'boolean',
-      uniqueValues: 2,
-      sampleValues: [true, false],
-    },
-  ],
-  rows: [
-    ['2024-01-01', '电子产品', 12000, 120, '华东', true],
-    ['2024-01-01', '服装', 8500, 85, '华东', false],
-    ['2024-01-01', '食品', 15600, 156, '华东', true],
-    ['2024-01-01', '家居', 9200, 92, '华东', false],
-    ['2024-02-01', '电子产品', 13500, 135, '华南', true],
-    ['2024-02-01', '服装', 9200, 92, '华南', true],
-    ['2024-02-01', '食品', 14200, 142, '华南', false],
-    ['2024-02-01', '家居', 8800, 88, '华南', false],
-    ['2024-03-01', '电子产品', 11800, 118, '华北', false],
-    ['2024-03-01', '服装', 9600, 96, '华北', true],
-    ['2024-03-01', '食品', 16800, 168, '华北', true],
-    ['2024-03-01', '家居', 10200, 102, '华北', false],
-    ['2024-04-01', '电子产品', 14200, 142, '华东', true],
-    ['2024-04-01', '服装', 7800, 78, '华东', false],
-    ['2024-04-01', '食品', 13200, 132, '华东', true],
-    ['2024-04-01', '家居', 11000, 110, '华东', false],
-    ['2024-05-01', '电子产品', 12800, 128, '华南', false],
-    ['2024-05-01', '服装', 10400, 104, '华南', true],
-    ['2024-05-01', '食品', 14800, 148, '华南', false],
-    ['2024-05-01', '家居', 8600, 86, '华南', true],
-    ['2024-06-01', '电子产品', 15200, 152, '华北', true],
-    ['2024-06-01', '服装', 7200, 72, '华北', false],
-    ['2024-06-01', '食品', 16400, 164, '华北', true],
-    ['2024-06-01', '家居', 9400, 94, '华北', false],
-    ['2024-07-01', '电子产品', 13800, 138, '华东', false],
-    ['2024-07-01', '服装', 9800, 98, '华东', true],
-    ['2024-07-01', '食品', 17200, 172, '华东', false],
-    ['2024-07-01', '家居', 10800, 108, '华东', true],
-    ['2024-08-01', '电子产品', 14500, 145, '华南', true],
-    ['2024-08-01', '服装', 7600, 76, '华南', false],
-    ['2024-08-01', '食品', 13600, 136, '华南', true],
-    ['2024-08-01', '家居', 11200, 112, '华南', false],
-    ['2024-09-01', '电子产品', 13200, 132, '华北', false],
-    ['2024-09-01', '服装', 10600, 106, '华北', true],
-    ['2024-09-01', '食品', 18000, 180, '华北', true],
-    ['2024-09-01', '家居', 8800, 88, '华北', false],
-    ['2024-10-01', '电子产品', 15800, 158, '华东', true],
-    ['2024-10-01', '服装', 8400, 84, '华东', false],
-    ['2024-10-01', '食品', 14400, 144, '华东', true],
-    ['2024-10-01', '家居', 11600, 116, '华东', false],
-    ['2024-11-01', '电子产品', 12500, 125, '华南', false],
-    ['2024-11-01', '服装', 11000, 110, '华南', true],
-    ['2024-11-01', '食品', 15600, 156, '华南', false],
-    ['2024-11-01', '家居', 9000, 90, '华南', true],
-    ['2024-12-01', '电子产品', 16800, 168, '华北', true],
-    ['2024-12-01', '服装', 6800, 68, '华北', false],
-    ['2024-12-01', '食品', 18800, 188, '华北', true],
-    ['2024-12-01', '家居', 12400, 124, '华北', false],
-  ],
-  rowCount: 48,
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-12-01'),
+// 销售数据字段定义
+export const salesFields: Field[] = [
+  {
+    name: 'date',
+    type: 'date',
+    uniqueValues: 12
+  },
+  {
+    name: 'product',
+    type: 'string',
+    uniqueValues: 4
+  },
+  {
+    name: 'region',
+    type: 'string',
+    uniqueValues: 3
+  },
+  {
+    name: 'sales',
+    type: 'number',
+    uniqueValues: 36
+  },
+  {
+    name: 'quantity',
+    type: 'number',
+    uniqueValues: 36
+  },
+  {
+    name: 'profit',
+    type: 'number',
+    uniqueValues: 36
+  }
+];
+
+// 生成销售数据
+export const generateSalesData = (): DataRow[] => {
+  const products = ['笔记本电脑', '智能手机', '平板电脑', '智能手表'];
+  const regions = ['华东', '华南', '华北'];
+  const months = [
+    '2024-01-01', '2024-02-01', '2024-03-01', '2024-04-01',
+    '2024-05-01', '2024-06-01', '2024-07-01', '2024-08-01',
+    '2024-09-01', '2024-10-01', '2024-11-01', '2024-12-01'
+  ];
+
+  const data: DataRow[] = [];
+
+  products.forEach(product => {
+    regions.forEach(region => {
+      months.forEach(month => {
+        // 基础销量（不同产品有不同基础销量）
+        const baseSales = {
+          '笔记本电脑': 120,
+          '智能手机': 200,
+          '平板电脑': 80,
+          '智能手表': 150
+        }[product] || 100;
+
+        // 地区影响因子
+        const regionFactor = {
+          '华东': 1.2,
+          '华南': 1.0,
+          '华北': 0.9
+        }[region] || 1.0;
+
+        // 季节性影响（夏季和冬季销量较高）
+        const monthNum = new Date(month).getMonth();
+        const seasonalFactor = monthNum >= 5 && monthNum <= 8 ? 1.3 : 
+                             monthNum >= 11 || monthNum <= 1 ? 1.2 : 1.0;
+
+        // 计算最终销量
+        const sales = Math.round(baseSales * regionFactor * seasonalFactor * (0.8 + Math.random() * 0.4));
+        const quantity = Math.round(sales / (100 + Math.random() * 50));
+        const profit = Math.round(sales * (0.15 + Math.random() * 0.1));
+
+        data.push({
+          date: new Date(month),
+          product,
+          region,
+          sales,
+          quantity,
+          profit
+        });
+      });
+    });
+  });
+
+  return data;
+};
+
+// 预生成的销售数据
+export const salesData: DataRow[] = [
+  { date: new Date('2024-01-01'), product: '笔记本电脑', region: '华东', sales: 144, quantity: 1, profit: 22 },
+  { date: new Date('2024-01-01'), product: '笔记本电脑', region: '华南', sales: 120, quantity: 1, profit: 18 },
+  { date: new Date('2024-01-01'), product: '笔记本电脑', region: '华北', sales: 108, quantity: 1, profit: 16 },
+  { date: new Date('2024-01-01'), product: '智能手机', region: '华东', sales: 240, quantity: 2, profit: 36 },
+  { date: new Date('2024-01-01'), product: '智能手机', region: '华南', sales: 200, quantity: 2, profit: 30 },
+  { date: new Date('2024-01-01'), product: '智能手机', region: '华北', sales: 180, quantity: 2, profit: 27 },
+  { date: new Date('2024-01-01'), product: '平板电脑', region: '华东', sales: 96, quantity: 1, profit: 14 },
+  { date: new Date('2024-01-01'), product: '平板电脑', region: '华南', sales: 80, quantity: 1, profit: 12 },
+  { date: new Date('2024-01-01'), product: '平板电脑', region: '华北', sales: 72, quantity: 1, profit: 11 },
+  { date: new Date('2024-01-01'), product: '智能手表', region: '华东', sales: 180, quantity: 1, profit: 27 },
+  { date: new Date('2024-01-01'), product: '智能手表', region: '华南', sales: 150, quantity: 1, profit: 23 },
+  { date: new Date('2024-01-01'), product: '智能手表', region: '华北', sales: 135, quantity: 1, profit: 20 },
+  
+  { date: new Date('2024-02-01'), product: '笔记本电脑', region: '华东', sales: 132, quantity: 1, profit: 20 },
+  { date: new Date('2024-02-01'), product: '笔记本电脑', region: '华南', sales: 110, quantity: 1, profit: 17 },
+  { date: new Date('2024-02-01'), product: '笔记本电脑', region: '华北', sales: 99, quantity: 1, profit: 15 },
+  { date: new Date('2024-02-01'), product: '智能手机', region: '华东', sales: 220, quantity: 2, profit: 33 },
+  { date: new Date('2024-02-01'), product: '智能手机', region: '华南', sales: 183, quantity: 2, profit: 27 },
+  { date: new Date('2024-02-01'), product: '智能手机', region: '华北', sales: 165, quantity: 2, profit: 25 },
+  { date: new Date('2024-02-01'), product: '平板电脑', region: '华东', sales: 88, quantity: 1, profit: 13 },
+  { date: new Date('2024-02-01'), product: '平板电脑', region: '华南', sales: 73, quantity: 1, profit: 11 },
+  { date: new Date('2024-02-01'), product: '平板电脑', region: '华北', sales: 66, quantity: 1, profit: 10 },
+  { date: new Date('2024-02-01'), product: '智能手表', region: '华东', sales: 165, quantity: 1, profit: 25 },
+  { date: new Date('2024-02-01'), product: '智能手表', region: '华南', sales: 138, quantity: 1, profit: 21 },
+  { date: new Date('2024-02-01'), product: '智能手表', region: '华北', sales: 124, quantity: 1, profit: 19 },
+  
+  { date: new Date('2024-03-01'), product: '笔记本电脑', region: '华东', sales: 156, quantity: 1, profit: 23 },
+  { date: new Date('2024-03-01'), product: '笔记本电脑', region: '华南', sales: 130, quantity: 1, profit: 20 },
+  { date: new Date('2024-03-01'), product: '笔记本电脑', region: '华北', sales: 117, quantity: 1, profit: 18 },
+  { date: new Date('2024-03-01'), product: '智能手机', region: '华东', sales: 260, quantity: 2, profit: 39 },
+  { date: new Date('2024-03-01'), product: '智能手机', region: '华南', sales: 217, quantity: 2, profit: 33 },
+  { date: new Date('2024-03-01'), product: '智能手机', region: '华北', sales: 195, quantity: 2, profit: 29 },
+  { date: new Date('2024-03-01'), product: '平板电脑', region: '华东', sales: 104, quantity: 1, profit: 16 },
+  { date: new Date('2024-03-01'), product: '平板电脑', region: '华南', sales: 87, quantity: 1, profit: 13 },
+  { date: new Date('2024-03-01'), product: '平板电脑', region: '华北', sales: 78, quantity: 1, profit: 12 },
+  { date: new Date('2024-03-01'), product: '智能手表', region: '华东', sales: 195, quantity: 1, profit: 29 },
+  { date: new Date('2024-03-01'), product: '智能手表', region: '华南', sales: 163, quantity: 1, profit: 24 },
+  { date: new Date('2024-03-01'), product: '智能手表', region: '华北', sales: 146, quantity: 1, profit: 22 }
+];
+
+// 获取演示数据
+export const getSampleData = () => {
+  return {
+    fields: salesFields,
+    rows: salesData,
+    name: '销售数据示例',
+    description: '包含2024年各产品在各地区的销售数据'
+  };
 };
 
 /**

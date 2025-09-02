@@ -1,110 +1,210 @@
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
-import { CONFIG } from '@/app/config';
+import { Field, DataRow } from '@/app/types';
 
-export interface ParsedData {
-  headers: string[];
-  rows: any[][];
-}
-
-/**
- * 解析数据文件（CSV或Excel）
- */
-export async function parseData(file: File): Promise<any[][]> {
-  const fileExtension = file.name.split('.').pop()?.toLowerCase();
-  
-  try {
-    if (fileExtension === 'csv') {
-      return await parseCSV(file);
-    } else if (['xlsx', 'xls'].includes(fileExtension || '')) {
-      return await parseExcel(file);
-    } else {
-      throw new Error('不支持的文件格式');
-    }
-  } catch (error) {
-    console.error('文件解析失败:', error);
-    throw new Error(`文件解析失败: ${error instanceof Error ? error.message : '未知错误'}`);
-  }
+export interface ParseResult {
+  success: boolean;
+  fields?: Field[];
+  rows?: DataRow[];
+  error?: string;
 }
 
 /**
  * 解析CSV文件
  */
-async function parseCSV(file: File): Promise<any[][]> {
-  return new Promise((resolve, reject) => {
+const parseCSV = async (file: File): Promise<ParseResult> => {
+  return new Promise((resolve) => {
     Papa.parse(file, {
-      header: false,
+      header: true,
       skipEmptyLines: true,
       complete: (results) => {
         if (results.errors.length > 0) {
-          reject(new Error(`CSV解析错误: ${results.errors[0].message}`));
+          resolve({
+            success: false,
+            error: `CSV解析错误: ${results.errors[0].message}`
+          });
           return;
         }
-        
-        const data = results.data as any[][];
-        if (data.length === 0) {
-          reject(new Error('CSV文件为空'));
+
+        if (results.data.length === 0) {
+          resolve({
+            success: false,
+            error: 'CSV文件为空或没有数据行'
+          });
           return;
         }
-        
-        // 限制行数
-        const limitedData = data.slice(0, CONFIG.MAX_ROWS_PROCESS);
-        resolve(limitedData);
+
+        const fields = inferFields(results.data);
+        const rows = results.data as DataRow[];
+
+        resolve({
+          success: true,
+          fields,
+          rows
+        });
       },
       error: (error) => {
-        reject(new Error(`CSV解析失败: ${error.message}`));
-      },
+        resolve({
+          success: false,
+          error: `CSV解析失败: ${error.message}`
+        });
+      }
     });
   });
-}
+};
 
 /**
  * 解析Excel文件
  */
-async function parseExcel(file: File): Promise<any[][]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+const parseExcel = async (file: File): Promise<ParseResult> => {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        
-        // 获取第一个工作表
-        const firstSheetName = workbook.SheetNames[0];
-        if (!firstSheetName) {
-          reject(new Error('Excel文件没有工作表'));
-          return;
-        }
-        
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        // 转换为数组格式
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        
-        if (jsonData.length === 0) {
-          reject(new Error('Excel工作表为空'));
-          return;
-        }
-        
-        // 过滤空行并限制行数
-        const filteredData = (jsonData as any[][])
-          .filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''))
-          .slice(0, CONFIG.MAX_ROWS_PROCESS);
-        
-        resolve(filteredData);
-      } catch (error) {
-        reject(new Error(`Excel解析失败: ${error instanceof Error ? error.message : '未知错误'}`));
-      }
+    // 获取第一个工作表
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    
+    if (!worksheet) {
+      return {
+        success: false,
+        error: 'Excel文件没有工作表'
+      };
+    }
+
+    // 转换为JSON
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    
+    if (jsonData.length < 2) {
+      return {
+        success: false,
+        error: 'Excel文件数据不足（至少需要标题行和一行数据）'
+      };
+    }
+
+    // 第一行作为字段名
+    const headers = jsonData[0] as string[];
+    const dataRows = jsonData.slice(1) as any[][];
+
+    // 转换为对象数组
+    const rows: DataRow[] = dataRows.map(row => {
+      const obj: DataRow = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index] || null;
+      });
+      return obj;
+    });
+
+    const fields = inferFields(rows);
+
+    return {
+      success: true,
+      fields,
+      rows
     };
-    
-    reader.onerror = () => {
-      reject(new Error('文件读取失败'));
+  } catch (error) {
+    return {
+      success: false,
+      error: `Excel解析失败: ${error instanceof Error ? error.message : '未知错误'}`
     };
-    
-    reader.readAsArrayBuffer(file);
+  }
+};
+
+/**
+ * 推断字段类型
+ */
+const inferFields = (rows: DataRow[]): Field[] => {
+  if (rows.length === 0) return [];
+
+  const sampleSize = Math.min(1000, rows.length);
+  const sampleRows = rows.slice(0, sampleSize);
+  const fieldNames = Object.keys(sampleRows[0] || {});
+
+  return fieldNames.map(name => {
+    const type = inferFieldType(name, sampleRows);
+    return {
+      name,
+      type,
+      uniqueValues: countUniqueValues(name, sampleRows)
+    };
   });
-}
+};
+
+/**
+ * 推断单个字段类型
+ */
+const inferFieldType = (fieldName: string, rows: DataRow[]): string => {
+  const values = rows.map(row => row[fieldName]).filter(v => v !== null && v !== undefined);
+  
+  if (values.length === 0) return 'string';
+
+  // 检查是否为布尔值
+  const booleanValues = values.filter(v => 
+    typeof v === 'boolean' || 
+    (typeof v === 'string' && /^(true|false|yes|no|1|0)$/i.test(v))
+  );
+  if (booleanValues.length === values.length) return 'boolean';
+
+  // 检查是否为日期
+  const dateValues = values.filter(v => {
+    if (v instanceof Date) return true;
+    if (typeof v === 'string') {
+      const date = new Date(v);
+      return !isNaN(date.getTime());
+    }
+    return false;
+  });
+  if (dateValues.length > values.length * 0.8) return 'date';
+
+  // 检查是否为数字
+  const numberValues = values.filter(v => 
+    typeof v === 'number' || 
+    (typeof v === 'string' && !isNaN(Number(v)) && v.trim() !== '')
+  );
+  if (numberValues.length > values.length * 0.8) return 'number';
+
+  return 'string';
+};
+
+/**
+ * 统计唯一值数量
+ */
+const countUniqueValues = (fieldName: string, rows: DataRow[]): number => {
+  const values = rows.map(row => row[fieldName]);
+  const uniqueValues = new Set(values);
+  return uniqueValues.size;
+};
+
+/**
+ * 主解析函数
+ */
+export const parseData = async (file: File): Promise<ParseResult> => {
+  const fileType = file.type;
+  const fileName = file.name.toLowerCase();
+
+  try {
+    if (fileType === 'text/csv' || fileName.endsWith('.csv')) {
+      return await parseCSV(file);
+    } else if (
+      fileType.includes('excel') || 
+      fileType.includes('spreadsheet') ||
+      fileName.endsWith('.xlsx') || 
+      fileName.endsWith('.xls')
+    ) {
+      return await parseExcel(file);
+    } else {
+      return {
+        success: false,
+        error: '不支持的文件格式，请上传CSV或Excel文件'
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: `文件解析失败: ${error instanceof Error ? error.message : '未知错误'}`
+    };
+  }
+};
 
 /**
  * 验证数据格式

@@ -1,165 +1,98 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useDatasetStore } from '@/store';
-import { CONFIG } from '@/app/config';
+import { Field, DataRow } from '@/app/types';
 
-const DataTable: React.FC = () => {
-  const { currentDataset } = useDatasetStore();
-  const [showAllRows, setShowAllRows] = useState(false);
+interface DataTableProps {
+  maxRows?: number;
+}
 
-  if (!currentDataset) {
+const DataTable: React.FC<DataTableProps> = ({ maxRows = 100 }) => {
+  const { fields, rows } = useDatasetStore();
+  
+  if (!fields || fields.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        没有可显示的数据
+        暂无数据，请先上传文件
       </div>
     );
   }
 
-  const displayRows = showAllRows 
-    ? currentDataset.rows.slice(0, CONFIG.MAX_ROWS_PREVIEW)
-    : currentDataset.rows.slice(0, 100); // 默认显示前100行
-
-  const hasMoreRows = currentDataset.rows.length > displayRows.length;
+  const displayRows = rows.slice(0, maxRows);
+  const hasMore = rows.length > maxRows;
 
   return (
-    <div className="space-y-4">
-      {/* 字段信息 */}
-      <div className="space-y-3">
-        <h4 className="font-medium text-gray-900">字段信息</h4>
-        <div className="grid grid-cols-1 gap-2">
-          {currentDataset.fields.map((field) => (
-            <div
-              key={field.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-            >
-              <div className="flex items-center space-x-3">
-                <span className="text-sm font-medium text-gray-900">{field.name}</span>
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  field.type === 'number' ? 'bg-blue-100 text-blue-800' :
-                  field.type === 'date' ? 'bg-green-100 text-green-800' :
-                  field.type === 'boolean' ? 'bg-purple-100 text-purple-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {field.type}
-                </span>
-              </div>
-              <div className="text-xs text-gray-500">
-                {field.uniqueValues} 个唯一值
-              </div>
-            </div>
-          ))}
+    <div className="w-full overflow-hidden">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-medium text-gray-900">数据预览</h3>
+        <div className="text-sm text-gray-500">
+          显示前 {displayRows.length} 行，共 {rows.length} 行
         </div>
       </div>
 
-      {/* 数据预览 */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="font-medium text-gray-900">数据预览</h4>
-          <span className="text-sm text-gray-500">
-            显示 {displayRows.length} / {currentDataset.rows.length} 行
-          </span>
-        </div>
-        
-        <div className="overflow-x-auto border border-gray-200 rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                {currentDataset.fields.map((field) => (
-                  <th
-                    key={field.id}
-                    className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+      <div className="overflow-x-auto border border-gray-200 rounded-lg">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              {fields.map((field, index) => (
+                <th
+                  key={index}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  <div className="flex items-center space-x-2">
+                    <span>{field.name}</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      {field.type}
+                    </span>
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {displayRows.map((row, rowIndex) => (
+              <tr key={rowIndex} className="hover:bg-gray-50">
+                {fields.map((field, fieldIndex) => (
+                  <td
+                    key={fieldIndex}
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                   >
-                    <div className="flex flex-col">
-                      <span>{field.name}</span>
-                      <span className="text-xs text-gray-400 font-normal">
-                        {field.type}
-                      </span>
-                    </div>
-                  </th>
+                    {formatCellValue(row[field.name], field.type)}
+                  </td>
                 ))}
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {displayRows.map((row, rowIndex) => (
-                <tr key={rowIndex} className="hover:bg-gray-50">
-                  {row.map((cell, cellIndex) => (
-                    <td
-                      key={cellIndex}
-                      className="px-3 py-2 text-sm text-gray-900 max-w-xs truncate"
-                      title={String(cell)}
-                    >
-                      {formatCellValue(cell, currentDataset.fields[cellIndex]?.type)}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* 显示更多按钮 */}
-        {hasMoreRows && (
-          <div className="text-center">
-            <button
-              onClick={() => setShowAllRows(!showAllRows)}
-              className="btn btn-outline btn-sm"
-            >
-              {showAllRows ? '显示较少行' : '显示更多行'}
-            </button>
-          </div>
-        )}
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* 数据统计 */}
-      <div className="space-y-3">
-        <h4 className="font-medium text-gray-900">数据统计</h4>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">
-              {currentDataset.rowCount.toLocaleString()}
-            </div>
-            <div className="text-sm text-blue-700">总行数</div>
-          </div>
-          <div className="p-3 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">
-              {currentDataset.fields.length}
-            </div>
-            <div className="text-sm text-green-700">字段数</div>
-          </div>
+      {hasMore && (
+        <div className="mt-4 text-center text-sm text-gray-500">
+          仅显示前 {maxRows} 行数据，完整数据共 {rows.length} 行
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
-/**
- * 格式化单元格值
- */
-function formatCellValue(value: any, fieldType?: string): string {
+// 格式化单元格值
+const formatCellValue = (value: any, type: string): string => {
   if (value === null || value === undefined) {
     return '-';
   }
 
-  switch (fieldType) {
-    case 'date':
-      try {
-        const date = new Date(value);
-        return date.toLocaleDateString();
-      } catch {
-        return String(value);
-      }
-    
+  switch (type) {
     case 'number':
-      if (typeof value === 'number') {
-        return value.toLocaleString();
+      return typeof value === 'number' ? value.toLocaleString() : String(value);
+    case 'date':
+      if (value instanceof Date) {
+        return value.toLocaleDateString();
       }
       return String(value);
-    
     case 'boolean':
       return value ? '是' : '否';
-    
     default:
       return String(value);
   }
-}
+};
 
 export default DataTable;

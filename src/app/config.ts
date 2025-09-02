@@ -72,14 +72,14 @@ export const CHART_TYPES = {
     name: '饼图',
     description: '展示部分与整体的比例关系',
     icon: '🥧',
-    requiredFields: ['category', 'value'],
+    requiredFields: ['x', 'value'],
     optionalFields: [],
   },
   radar: {
     name: '雷达图',
     description: '展示多维度的对比分析',
     icon: '🕸️',
-    requiredFields: ['dimension', 'value'],
+    requiredFields: ['x', 'value'],
     optionalFields: ['series'],
   },
 } as const;

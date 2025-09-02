@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useDatasetStore, useChartConfigStore } from '@/store';
-import { ChartType, FieldRole } from '@/app/types';
+import { ChartKind, Field, Mapping } from '@/app/types';
 import { CHART_TYPES } from '@/app/config';
 
 interface ChartConfiguratorProps {
-  chartType: ChartType;
+  chartType: ChartKind;
   onCreateChart: (title: string) => void;
   onCancel: () => void;
 }
@@ -18,7 +18,7 @@ const ChartConfigurator: React.FC<ChartConfiguratorProps> = ({
   const { createDefaultChart } = useChartConfigStore();
   
   const [title, setTitle] = useState('');
-  const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
+  const [fieldMapping, setFieldMapping] = useState<Mapping>({});
   const [errors, setErrors] = useState<string[]>([]);
 
   if (!currentDataset) {
@@ -28,10 +28,10 @@ const ChartConfigurator: React.FC<ChartConfiguratorProps> = ({
   const chartConfig = CHART_TYPES[chartType];
   const { requiredFields, optionalFields } = chartConfig;
 
-  const handleFieldMappingChange = (role: string, fieldId: string) => {
+  const handleFieldMappingChange = (role: keyof Mapping, fieldName: string) => {
     setFieldMapping(prev => ({
       ...prev,
-      [role]: fieldId,
+      [role]: fieldName,
     }));
   };
 
@@ -44,7 +44,7 @@ const ChartConfigurator: React.FC<ChartConfiguratorProps> = ({
 
     // 检查必需字段是否已映射
     for (const requiredField of requiredFields) {
-      if (!fieldMapping[requiredField]) {
+      if (!fieldMapping[requiredField as keyof Mapping]) {
         newErrors.push(`请映射必需字段: ${requiredField}`);
       }
     }
@@ -59,13 +59,11 @@ const ChartConfigurator: React.FC<ChartConfiguratorProps> = ({
     }
   };
 
-  const getFieldOptions = (role: string) => {
+  const getFieldOptions = (role: keyof Mapping) => {
     return currentDataset.fields.filter(field => {
       // 根据角色过滤合适的字段类型
       switch (role) {
         case 'x':
-        case 'category':
-        case 'dimension':
           return field.type === 'string' || field.type === 'date' || field.type === 'number';
         case 'y':
         case 'value':
@@ -78,26 +76,22 @@ const ChartConfigurator: React.FC<ChartConfiguratorProps> = ({
     });
   };
 
-  const getRoleLabel = (role: string): string => {
-    const roleLabels: Record<string, string> = {
+  const getRoleLabel = (role: keyof Mapping): string => {
+    const roleLabels: Record<keyof Mapping, string> = {
       x: 'X轴',
       y: 'Y轴',
       series: '系列',
-      category: '分类',
       value: '数值',
-      dimension: '维度',
     };
     return roleLabels[role] || role;
   };
 
-  const getRoleDescription = (role: string): string => {
-    const roleDescriptions: Record<string, string> = {
+  const getRoleDescription = (role: keyof Mapping): string => {
+    const roleDescriptions: Record<keyof Mapping, string> = {
       x: '用于X轴显示的字段',
-      y: '用于Y轴数值的字段',
+      y: 'Y轴数值的字段',
       series: '用于分组显示的字段',
-      category: '用于分类显示的字段',
       value: '用于数值计算的字段',
-      dimension: '用于多维度分析的字段',
     };
     return roleDescriptions[role] || '';
   };
@@ -146,7 +140,7 @@ const ChartConfigurator: React.FC<ChartConfiguratorProps> = ({
               >
                 <option value="">请选择字段</option>
                 {getFieldOptions(role).map((field) => (
-                  <option key={field.id} value={field.id}>
+                  <option key={field.name} value={field.name}>
                     {field.name} ({field.type})
                   </option>
                 ))}
@@ -174,7 +168,7 @@ const ChartConfigurator: React.FC<ChartConfiguratorProps> = ({
                 >
                   <option value="">请选择字段（可选）</option>
                   {getFieldOptions(role).map((field) => (
-                    <option key={field.id} value={field.id}>
+                    <option key={field.name} value={field.name}>
                       {field.name} ({field.type})
                     </option>
                   ))}

@@ -11,14 +11,16 @@ interface DatasetState {
   
   // 操作
   setDataset: (dataset: Dataset) => void;
+  setFields: (fields: Field[]) => void;
+  setRows: (rows: any[][]) => void;
   clearDataset: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   
   // 数据操作
-  updateField: (fieldId: string, updates: Partial<Field>) => void;
+  updateField: (fieldName: string, updates: Partial<Field>) => void;
   addField: (field: Field) => void;
-  removeField: (fieldId: string) => void;
+  removeField: (fieldName: string) => void;
   
   // 数据验证
   validateDataset: (dataset: Dataset) => boolean;
@@ -49,6 +51,35 @@ export const useDatasetStore = create<DatasetState>()(
         }
       },
       
+      // 设置字段
+      setFields: (fields: Field[]) => {
+        const { currentDataset } = get();
+        if (!currentDataset) return;
+        
+        set({
+          currentDataset: {
+            ...currentDataset,
+            fields,
+            updatedAt: new Date(),
+          },
+        });
+      },
+      
+      // 设置行数据
+      setRows: (rows: any[][]) => {
+        const { currentDataset } = get();
+        if (!currentDataset) return;
+        
+        set({
+          currentDataset: {
+            ...currentDataset,
+            rows,
+            rowCount: rows.length,
+            updatedAt: new Date(),
+          },
+        });
+      },
+      
       // 清除数据集
       clearDataset: () => {
         set({ currentDataset: null, error: null });
@@ -65,12 +96,12 @@ export const useDatasetStore = create<DatasetState>()(
       },
       
       // 更新字段
-      updateField: (fieldId: string, updates: Partial<Field>) => {
+      updateField: (fieldName: string, updates: Partial<Field>) => {
         const { currentDataset } = get();
         if (!currentDataset) return;
         
         const updatedFields = currentDataset.fields.map(field =>
-          field.id === fieldId ? { ...field, ...updates } : field
+          field.name === fieldName ? { ...field, ...updates } : field
         );
         
         set({
@@ -97,12 +128,12 @@ export const useDatasetStore = create<DatasetState>()(
       },
       
       // 删除字段
-      removeField: (fieldId: string) => {
+      removeField: (fieldName: string) => {
         const { currentDataset } = get();
         if (!currentDataset) return;
         
         const updatedFields = currentDataset.fields.filter(
-          field => field.id !== fieldId
+          field => field.name !== fieldName
         );
         
         set({

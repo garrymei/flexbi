@@ -1,27 +1,27 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { ChartConfig, ChartType, FieldMapping, ChartStyle, ChartType as ChartTypeEnum } from '@/app/types';
+import { ChartConfig, ChartKind, Mapping } from '@/app/types';
 import { DEFAULT_STYLES, CHART_TYPES } from '@/app/config';
 
 interface ChartConfigState {
   // 状态
   charts: ChartConfig[];
   activeChartId: string | null;
-  selectedChartType: ChartType | null;
+  selectedChartType: ChartKind | null;
   
   // 操作
   addChart: (chart: ChartConfig) => void;
   updateChart: (chartId: string, updates: Partial<ChartConfig>) => void;
   removeChart: (chartId: string) => void;
   setActiveChart: (chartId: string | null) => void;
-  setSelectedChartType: (chartType: ChartType | null) => void;
+  setSelectedChartType: (chartType: ChartKind | null) => void;
   
   // 字段映射操作
-  updateFieldMapping: (chartId: string, role: string, fieldId: string) => void;
-  clearFieldMapping: (chartId: string, role: string) => void;
+  updateFieldMapping: (chartId: string, role: keyof Mapping, fieldName: string) => void;
+  clearFieldMapping: (chartId: string, role: keyof Mapping) => void;
   
   // 样式操作
-  updateChartStyle: (chartId: string, styleUpdates: Partial<ChartStyle>) => void;
+  updateChartStyle: (chartId: string, styleUpdates: Partial<ChartConfig['style']>) => void;
   resetChartStyle: (chartId: string) => void;
   
   // 验证
@@ -33,7 +33,7 @@ interface ChartConfigState {
   getChartById: (chartId: string) => ChartConfig | null;
   
   // 工具方法
-  createDefaultChart: (type: ChartType, title: string) => ChartConfig;
+  createDefaultChart: (type: ChartKind, title: string) => ChartConfig;
   duplicateChart: (chartId: string) => void;
 }
 
@@ -90,12 +90,12 @@ export const useChartConfigStore = create<ChartConfigState>()(
       },
       
       // 更新字段映射
-      updateFieldMapping: (chartId: string, role: string, fieldId: string) => {
+      updateFieldMapping: (chartId: string, role: keyof Mapping, fieldName: string) => {
         set(state => ({
           charts: state.charts.map(chart => {
             if (chart.id === chartId) {
-              const newMapping = { ...chart.fieldMapping, [role]: fieldId };
-              return { ...chart, fieldMapping: newMapping };
+              const newMapping = { ...chart.mapping, [role]: fieldName };
+              return { ...chart, mapping: newMapping };
             }
             return chart;
           }),
@@ -103,12 +103,12 @@ export const useChartConfigStore = create<ChartConfigState>()(
       },
       
       // 清除字段映射
-      clearFieldMapping: (chartId: string, role: string) => {
+      clearFieldMapping: (chartId: string, role: keyof Mapping) => {
         set(state => ({
           charts: state.charts.map(chart => {
             if (chart.id === chartId) {
-              const { [role]: removed, ...newMapping } = chart.fieldMapping;
-              return { ...chart, fieldMapping: newMapping };
+              const { [role]: removed, ...newMapping } = chart.mapping;
+              return { ...chart, mapping: newMapping };
             }
             return chart;
           }),
@@ -116,7 +116,7 @@ export const useChartConfigStore = create<ChartConfigState>()(
       },
       
       // 更新图表样式
-      updateChartStyle: (chartId: string, styleUpdates: Partial<ChartStyle>) => {
+      updateChartStyle: (chartId: string, styleUpdates: Partial<ChartConfig['style']>) => {
         set(state => ({
           charts: state.charts.map(chart => {
             if (chart.id === chartId) {
@@ -134,7 +134,14 @@ export const useChartConfigStore = create<ChartConfigState>()(
       resetChartStyle: (chartId: string) => {
         const chart = get().getChartById(chartId);
         if (chart) {
-          get().updateChartStyle(chartId, DEFAULT_STYLES.chart);
+          get().updateChartStyle(chartId, {
+            title: chart.style?.title || '',
+            legend: true,
+            label: false,
+            colorScheme: 'default',
+            xLabelRotate: 0,
+            decimals: 2
+          });
         }
       },
       
@@ -183,16 +190,21 @@ export const useChartConfigStore = create<ChartConfigState>()(
       },
       
       // 创建默认图表
-      createDefaultChart: (type: ChartType, title: string): ChartConfig => {
+      createDefaultChart: (type: ChartKind, title: string): ChartConfig => {
         const id = `chart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
         return {
-          id,
-          type,
-          title,
-          fieldMapping: {},
-          style: { ...DEFAULT_STYLES.chart },
-          data: [],
+          kind: type,
+          mapping: {},
+          style: {
+            title,
+            legend: true,
+            label: false,
+            colorScheme: 'default',
+            xLabelRotate: 0,
+            decimals: 2
+          },
+          transform: undefined
         };
       },
       
