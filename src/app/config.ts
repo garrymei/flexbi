@@ -38,52 +38,6 @@ export const FEATURES = {
   ENABLE_CANVAS: false, // v2功能
 } as const;
 
-// 图表类型配置
-export const CHART_TYPES = {
-  line: {
-    name: '折线图',
-    description: '展示数据趋势变化',
-    icon: '📈',
-    requiredFields: ['x', 'y'],
-    optionalFields: ['series'],
-  },
-  bar: {
-    name: '柱状图',
-    description: '对比不同类别的数值',
-    icon: '📊',
-    requiredFields: ['x', 'y'],
-    optionalFields: ['series'],
-  },
-  area: {
-    name: '面积图',
-    description: '展示数据量的累积变化',
-    icon: '🟦',
-    requiredFields: ['x', 'y'],
-    optionalFields: ['series'],
-  },
-  scatter: {
-    name: '散点图',
-    description: '展示两个数值变量的关系',
-    icon: '🔵',
-    requiredFields: ['x', 'y'],
-    optionalFields: ['series'],
-  },
-  pie: {
-    name: '饼图',
-    description: '展示部分与整体的比例关系',
-    icon: '🥧',
-    requiredFields: ['x', 'value'],
-    optionalFields: [],
-  },
-  radar: {
-    name: '雷达图',
-    description: '展示多维度的对比分析',
-    icon: '🕸️',
-    requiredFields: ['x', 'value'],
-    optionalFields: ['series'],
-  },
-} as const;
-
 // 颜色方案
 export const COLOR_SCHEMES = {
   default: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'],

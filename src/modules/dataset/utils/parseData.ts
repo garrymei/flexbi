@@ -17,6 +17,7 @@ const parseCSV = async (file: File): Promise<ParseResult> => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      dynamicTyping: true,
       complete: (results) => {
         if (results.errors.length > 0) {
           resolve({
@@ -59,7 +60,7 @@ const parseCSV = async (file: File): Promise<ParseResult> => {
 const parseExcel = async (file: File): Promise<ParseResult> => {
   try {
     const arrayBuffer = await file.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
     
     // 获取第一个工作表
     const firstSheetName = workbook.SheetNames[0];
@@ -90,10 +91,13 @@ const parseExcel = async (file: File): Promise<ParseResult> => {
     const rows: DataRow[] = dataRows.map(row => {
       const obj: DataRow = {};
       headers.forEach((header, index) => {
-        obj[header] = row[index] || null;
+        obj[header] = row[index] ?? null;
       });
       return obj;
     });
+
+    // 规范化日期：处理 Date 对象与 Excel 日期序列号
+    normalizeExcelDates(rows, headers);
 
     const fields = inferFields(rows);
 
@@ -222,6 +226,48 @@ export function validateData(data: any[][]): boolean {
   }
   
   return data.every(row => Array.isArray(row) && row.length === firstRowLength);
+}
+
+// 判断并将 Excel 日期序列号转换为 YYYY-MM-DD 字符串
+function normalizeExcelDates(rows: DataRow[], headers: string[]) {
+  const isLikelySerialColumn = (col: string): boolean => {
+    const values = rows.map(r => r[col]).filter(v => v !== null && v !== undefined);
+    if (values.length === 0) return false;
+    const nums = values.filter(v => typeof v === 'number') as number[];
+    if (nums.length / values.length < 0.8) return false;
+    // 大多数 Excel 日期序列号在 20000~60000（约 1954~2064）
+    const inRange = nums.filter(n => n > 20000 && n < 60000).length / (nums.length || 1);
+    return inRange > 0.8;
+  };
+
+  const toDateString = (d: Date) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const serialToDate = (n: number): Date => {
+    // Excel 序列号起点 1899-12-30（简单处理，不考虑 1900 闰年 Bug）
+    const epoch = Date.UTC(1899, 11, 30);
+    return new Date(epoch + n * 86400000);
+  };
+
+  headers.forEach((h) => {
+    // 若已是 Date 对象，直接格式化；若疑似序列号列，则转换
+    const anyDateObj = rows.some(r => r[h] instanceof Date);
+    const likelySerial = isLikelySerialColumn(h);
+    if (!anyDateObj && !likelySerial) return;
+
+    rows.forEach(r => {
+      const v = r[h];
+      if (v instanceof Date) {
+        r[h] = toDateString(v);
+      } else if (typeof v === 'number' && likelySerial) {
+        r[h] = toDateString(serialToDate(v));
+      }
+    });
+  });
 }
 
 /**

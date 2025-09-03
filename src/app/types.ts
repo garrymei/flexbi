@@ -46,19 +46,34 @@ export interface ChartConfig {
   title: string;
   subtitle?: string;
   mapping: Mapping;
-  fieldMapping?: Record<FieldRole, string>; // 字段映射
   style?: {
     title?: string;
-    legend?: boolean;
-    label?: boolean;
+    subtitle?: string;
+    showLegend?: boolean;
+    showDataLabels?: boolean;
+    gridMargin?: number;
     colorScheme?: 'default' | 'schemeA' | 'schemeB';
     xLabelRotate?: 0 | 30 | 45 | 60 | 90;
     decimals?: 0 | 1 | 2 | 3;
+    // 动态样式属性
+    smooth?: boolean;           // 平滑曲线 (line/area)
+    showSymbol?: boolean;       // 显示标记点 (line/area/scatter)
+    lineWidth?: number;         // 线条宽度 (line/area)
+    stacked?: boolean;          // 堆叠 (bar/area)
+    barWidth?: number;          // 柱状图宽度 (bar)
+    showLabel?: boolean;        // 显示标签 (bar/pie)
+    opacity?: number;           // 透明度 (area)
+    symbolSize?: number;        // 标记点大小 (scatter)
+    roseType?: boolean;         // 玫瑰图 (pie)
+    showPercent?: boolean;      // 显示百分比 (pie)
+    radius?: number | string;   // 半径 (pie/radar)
+    showArea?: boolean;         // 显示区域 (radar)
+    showLine?: boolean;         // 显示线条 (radar)
   };
   transform?: {
     filter?: Array<{ field: string; op: 'eq'|'ne'|'gt'|'lt'|'ge'|'le'|'in'|'notin'; value: any | any[] }>;
     sort?: { field: string; order: 'asc'|'desc' }[];
-    aggregate?: { by?: string[]; field: string; op: 'sum'|'avg'|'min'|'max'|'count' };
+    aggregate?: { by?: string[]; field: string; op?: 'sum' };
   };
 }
 

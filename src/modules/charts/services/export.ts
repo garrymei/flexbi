@@ -2,6 +2,7 @@ import { saveAs } from 'file-saver';
 import { Field, DataRow, Mapping } from '@/app/types';
 import { ChartKind } from '../registry';
 import { toEChartsOption } from '../adapters/echarts/toOption';
+import { applyTransforms } from '@/modules/transforms';
 
 export interface ExportOptions {
   format: 'png' | 'svg';
@@ -21,6 +22,7 @@ export const exportChart = async (
   chartKind: ChartKind,
   mapping: Mapping,
   style?: any,
+  transform?: any,
   options: ExportOptions = { format: 'png' }
 ): Promise<void> => {
   try {
@@ -34,12 +36,20 @@ export const exportChart = async (
     const defaultFilename = `chart_${Date.now()}`;
     const finalFilename = filename || defaultFilename;
 
+    // 先应用数据变换
+    const rows2 = applyTransforms(rows, transform);
+
     // 获取ECharts配置
-    toEChartsOption(fields, rows, {
+    const option = toEChartsOption(fields, rows2, {
+      id: 'export_temp',
       type: chartKind,
+      title: filename || '导出图表',
+      subtitle: '',
       mapping,
-      style
+      style: style || {},
     } as any);
+
+    chartRef.setOption(option, true);
 
     // 设置图表尺寸
     chartRef.resize({ width, height });
@@ -66,6 +76,41 @@ export const exportChart = async (
     throw new Error(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
   }
 };
+
+/**
+ * 解耦导出：直接从已渲染实例导出为图片
+ */
+export async function exportImage(
+  getInstance: () => any | null,
+  type: 'png' | 'svg' = 'png',
+  opts: { filename?: string; pixelRatio?: number } = {}
+): Promise<void> {
+  const inst = getInstance();
+  if (!inst || typeof inst.getDataURL !== 'function') {
+    throw new Error('ECharts 实例不可用');
+  }
+
+  const filename = opts.filename || `chart_${Date.now()}.${type}`;
+  const dataURL = inst.getDataURL({
+    type,
+    pixelRatio: opts.pixelRatio ?? 1,
+    backgroundColor: '#ffffff',
+  });
+
+  if (type === 'png') {
+    const base64Data = dataURL.split(',')[1];
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+    saveAs(blob, filename);
+  } else {
+    const svgContent = decodeURIComponent(dataURL.split(',')[1]);
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+    saveAs(blob, filename);
+  }
+}
 
 /**
  * 下载PNG图片
@@ -109,6 +154,7 @@ export const exportMultipleCharts = async (
     kind: ChartKind;
     mapping: Mapping;
     style?: any;
+    transform?: any;
     name: string;
   }>,
   options: ExportOptions
@@ -122,6 +168,7 @@ export const exportMultipleCharts = async (
         chart.kind,
         chart.mapping,
         chart.style,
+        chart.transform,
         {
           ...options,
           filename: `${chart.name}_${index + 1}`
@@ -214,4 +261,3 @@ export const copyChartToClipboard = async (
     return false;
   }
 };
-

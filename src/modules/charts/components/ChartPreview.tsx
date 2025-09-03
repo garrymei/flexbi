@@ -1,70 +1,148 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChartConfig } from '@/app/types';
-import { CHART_TYPES } from '@/app/config';
+import { getChartSpec, getRequiredRoles } from '@/modules/charts/registry';
+import { toEChartsOption } from '@/modules/charts/adapters/echarts/toOption';
+import { applyTransforms } from '@/modules/transforms';
+import { useDatasetStore } from '@/store';
+import ReactECharts from 'echarts-for-react';
+import { exportImage } from '@/modules/charts/services/export';
+import { validateMapping, getChartSpec as getSpec } from '@/modules/charts/registry';
+import { getLastMeta } from '@/modules/charts/adapters/echarts/toOption/data';
 
 interface ChartPreviewProps {
   chart: ChartConfig;
+  onReady?: (utils: { getInstance: () => any | null }) => void;
+  showExportControls?: boolean;
 }
 
-const ChartPreview: React.FC<ChartPreviewProps> = ({ chart }) => {
-  const chartConfig = CHART_TYPES[chart.type];
+const ChartPreview: React.FC<ChartPreviewProps> = ({ chart, onReady, showExportControls = true }) => {
+  const { currentDataset } = useDatasetStore();
+  const chartSpec = getChartSpec(chart.type);
+  
+  if (!chartSpec || !currentDataset) return null;
 
-  // 检查图表是否配置完整
+  const requiredRoles = getRequiredRoles(chart.type);
+
   const isConfigured = () => {
-    const requiredFields = chartConfig.requiredFields;
-    return requiredFields.every(field => chart.fieldMapping?.[field]);
+    return requiredRoles.every(role => {
+      const mapping = chart.mapping as Record<string, string>;
+      return mapping?.[role];
+    });
   };
+
+  const getFieldMappingText = () => {
+    if (!chart.mapping) return '未配置字段映射';
+    
+    const mappings = Object.entries(chart.mapping)
+      .filter(([, value]) => value)
+      .map(([role, field]) => `${role}: ${field}`)
+      .join(', ');
+    
+    return mappings || '未配置字段映射';
+  };
+
+  // 生成ECharts选项
+  const echartsOption = useMemo(() => {
+    if (!isConfigured() || !currentDataset) return null;
+    try {
+      const rows2 = applyTransforms(currentDataset.rows, chart.transform);
+      return toEChartsOption(currentDataset.fields, rows2, chart);
+    } catch (error) {
+      console.error('生成图表选项失败:', error);
+      return null;
+    }
+  }, [chart, currentDataset]);
+
+  const ignoredInfo = useMemo(() => getLastMeta(), [echartsOption]);
+
+  // 实例获取器
+  const echartsRef = useRef<any>(null);
+  const getInstance = () => echartsRef.current?.getEchartsInstance?.() || null;
+
+  // 向上暴露实例获取器
+  useEffect(() => {
+    if (onReady) {
+      onReady({ getInstance });
+    }
+  }, [onReady]);
+
+  // 导出前校验
+  const canExport = useMemo(() => {
+    if (!currentDataset) return false;
+    const spec = getSpec(chart.type);
+    if (!spec) return false;
+    const validation = validateMapping(spec, chart.mapping as any, currentDataset.fields);
+    return validation.ok;
+  }, [chart, currentDataset]);
+
+  const [exportName, setExportName] = useState<string>(chart.title || 'chart');
 
   if (!isConfigured()) {
     return (
-      <div className="flex items-center justify-center h-32 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-        <div className="text-center">
-          <div className="text-2xl mb-2">{chartConfig.icon}</div>
-          <p className="text-sm text-gray-500">图表配置不完整</p>
-          <p className="text-xs text-gray-400 mt-1">
-            需要配置: {chartConfig.requiredFields.join(', ')}
-          </p>
-        </div>
+      <div className="text-center py-8 text-gray-500">
+        <div className="text-2xl mb-2">⚠️</div>
+        <p className="text-sm">图表配置不完整</p>
+        <p className="text-xs mt-1">{getFieldMappingText()}</p>
+      </div>
+    );
+  }
+
+  if (!echartsOption) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <div className="text-2xl mb-2">❌</div>
+        <p className="text-sm">图表渲染失败</p>
+        <p className="text-xs mt-1">请检查数据格式</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* 图表预览区域 */}
-      <div className="h-64 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-2">{chartConfig.icon}</div>
-          <h6 className="font-medium text-gray-900 mb-1">{chart.title}</h6>
-          <p className="text-sm text-gray-500">{chartConfig.name}</p>
-          <div className="mt-2 text-xs text-gray-400">
-                         字段映射: {chart.fieldMapping ? Object.keys(chart.fieldMapping).length : 0} 个
+      <div className="bg-white rounded-lg border border-gray-200 min-h-[300px] dark:bg-gray-800 dark:border-gray-700">
+        {showExportControls && (
+          <div className="flex items-center justify-end p-2 space-x-2">
+            <input
+              type="text"
+              value={exportName}
+              onChange={(e) => setExportName(e.target.value)}
+              className="px-2 py-1 text-xs border rounded"
+              placeholder="文件名"
+            />
+            <button
+              className={`px-2 py-1 text-xs rounded ${canExport ? 'bg-gray-100 hover:bg-gray-200' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+              disabled={!canExport}
+              onClick={() => exportImage(getInstance, 'png', { filename: exportName || 'chart', pixelRatio: 2 })}
+              title={canExport ? '导出为 PNG' : '配置不完整，无法导出'}
+            >导出PNG</button>
+            <button
+              className={`px-2 py-1 text-xs rounded ${canExport ? 'bg-gray-100 hover:bg-gray-200' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+              disabled={!canExport}
+              onClick={() => exportImage(getInstance, 'svg', { filename: exportName || 'chart' })}
+              title={canExport ? '导出为 SVG' : '配置不完整，无法导出'}
+            >导出SVG</button>
           </div>
-        </div>
+        )}
+        <ReactECharts
+          ref={echartsRef}
+          option={echartsOption}
+          style={{ height: '300px', width: '100%' }}
+          opts={{ renderer: 'canvas' }}
+        />
       </div>
 
       {/* 字段映射信息 */}
-      <div className="space-y-2">
-        <h6 className="text-sm font-medium text-gray-700">字段映射</h6>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          {chart.fieldMapping && Object.entries(chart.fieldMapping).map(([role, fieldId]) => (
-            <div key={role} className="flex justify-between">
-              <span className="text-gray-500">{role}:</span>
-              <span className="text-gray-900 font-medium">{fieldId}</span>
-            </div>
-          ))}
+      {chart.mapping && Object.entries(chart.mapping).map(([role, field]) => (
+        <div key={role} className="flex items-center justify-between text-xs text-gray-500">
+          <span className="capitalize">{role}:</span>
+          <span>{field}</span>
         </div>
-      </div>
+      ))}
 
-      {/* 操作按钮 */}
-      <div className="flex space-x-2">
-        <button className="btn btn-outline btn-sm flex-1">
-          编辑配置
-        </button>
-        <button className="btn btn-primary btn-sm flex-1">
-          导出图表
-        </button>
-      </div>
+      {ignoredInfo.ignored > 0 && (
+        <div className="text-xs text-amber-600">已忽略 {ignoredInfo.ignored} 条无效记录（空/非数值）</div>
+      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@ export * from './sort';
 
 // 分组聚合相关
 export * from './groupBy';
+export * from './aggregate';
 
 // 数据处理工具函数
 export const processData = {
@@ -26,6 +27,62 @@ export const processData = {
     get: () => rows
   })
 };
+
+// 统一应用过滤/排序/聚合
+import type { DataRow } from '@/app/types';
+import { applyFilter, FilterCondition } from './filter';
+import { sortData } from './sort';
+import { aggregateRows } from './aggregate';
+
+type TransformConfig = {
+  filter?: Array<{ field: string; op: 'eq'|'ne'|'gt'|'lt'|'ge'|'le'|'in'|'notin'; value: any | any[] }>;
+  sort?: Array<{ field: string; order: 'asc'|'desc' }>;
+  aggregate?: { by?: string[]; field: string; op?: 'sum' };
+};
+
+const opMap: Record<string, FilterCondition['operator']> = {
+  eq: 'equals',
+  ne: 'not_equals',
+  gt: 'greater_than',
+  lt: 'less_than',
+  ge: 'greater_equal',
+  le: 'less_equal',
+  in: 'in',
+  notin: 'not_in',
+};
+
+export const applyTransforms = (rows: DataRow[], config?: TransformConfig): DataRow[] => {
+  if (!config) return rows;
+  let out = rows;
+
+  // 过滤
+  if (config.filter && config.filter.length > 0) {
+    const conditions: FilterCondition[] = config.filter.map(f => ({
+      field: f.field,
+      operator: opMap[f.op] || 'equals',
+      value: f.value as any,
+      value2: undefined,
+    }));
+    if (conditions.length === 1) {
+      out = applyFilter(out, conditions[0]);
+    } else {
+      out = applyFilter(out, { conditions, logic: 'AND' });
+    }
+  }
+
+  // 排序
+  if (config.sort && config.sort.length > 0) {
+    out = sortData(out, config.sort.map(s => ({ field: s.field, direction: s.order })));
+  }
+
+  // 聚合（仅 sum）
+  if (config.aggregate && config.aggregate.field) {
+    out = aggregateRows(out, { by: config.aggregate.by || [], field: config.aggregate.field, op: 'sum' });
+  }
+
+  return out;
+};
+
 
 // 数据质量检查
 export const validateData = (rows: any[]) => {
@@ -132,4 +189,3 @@ const inferFieldType = (values: any[]): string => {
   
   return 'string';
 };
-

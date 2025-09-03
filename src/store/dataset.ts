@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { Dataset, Field, FieldType } from '@/app/types';
+import { Dataset, Field, FieldType, DataRow } from '@/app/types';
 import { CONFIG } from '@/app/config';
 
 export interface DatasetState {
@@ -12,7 +12,7 @@ export interface DatasetState {
   // 操作
   setDataset: (dataset: Dataset) => void;
   setFields: (fields: Field[]) => void;
-  setRows: (rows: any[][]) => void;
+  setRows: (rows: DataRow[]) => void;
   clearDataset: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -66,7 +66,7 @@ export const useDatasetStore = create<DatasetState>()(
       },
       
       // 设置行数据
-      setRows: (rows: any[][]) => {
+      setRows: (rows: DataRow[]) => {
         const { currentDataset } = get();
         if (!currentDataset) return;
         
@@ -162,11 +162,19 @@ export const useDatasetStore = create<DatasetState>()(
           return false;
         }
         
-        // 数据一致性验证
+        // 数据一致性验证（支持对象行或数组行）
         const expectedColumns = dataset.fields.length;
-        const hasValidRows = dataset.rows.every(row => 
-          Array.isArray(row) && row.length === expectedColumns
-        );
+        const hasValidRows = dataset.rows.every((row: any) => {
+          if (row && typeof row === 'object' && !Array.isArray(row)) {
+            // 对象行：至少包含一个字段键
+            return dataset.fields.some(f => Object.prototype.hasOwnProperty.call(row, f.key) || Object.prototype.hasOwnProperty.call(row, f.name));
+          }
+          if (Array.isArray(row)) {
+            // 数组行：列数等于字段数
+            return row.length === expectedColumns;
+          }
+          return false;
+        });
         
         return hasValidRows;
       },

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDatasetStore, useChartConfigStore } from '@/store';
-import { ChartKind } from '@/app/types';
+import { ChartKind, Mapping } from '@/app/types';
 import { getAllSampleData, getSampleDataByName } from '@/modules/samples/validationData';
 import { getAllChartKinds, suggestChartsForDataset } from '@/modules/charts/registry';
 import DataUploader from '@/modules/dataset/components/DataUploader';
@@ -28,9 +28,9 @@ const ValidationTest: React.FC = () => {
   };
 
   // 创建图表
-  const handleCreateChart = (title: string) => {
+  const handleCreateChart = (title: string, mapping: Mapping, style?: Record<string, any>) => {
     if (selectedChartType && currentDataset) {
-      const chart = createDefaultChart(selectedChartType, title);
+      const chart = createDefaultChart(selectedChartType, title, mapping, style);
       addChart(chart);
       setShowChartModal(false);
       setSelectedChartType(null);
