@@ -1,4 +1,4 @@
-import { Field, DataRow } from '@/app/types';
+import { DataRow } from '@/app/types';
 
 export interface FilterCondition {
   field: string;

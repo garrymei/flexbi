@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { ChartConfig, ChartKind, Mapping } from '@/app/types';
-import { DEFAULT_STYLES, CHART_TYPES } from '@/app/config';
+import { CHART_TYPES } from '@/app/config';
+import { ChartType } from '@/app/types';
 
-interface ChartConfigState {
+export interface ChartConfigState {
   // 状态
   charts: ChartConfig[];
   activeChartId: string | null;
@@ -169,7 +170,7 @@ export const useChartConfigStore = create<ChartConfigState>()(
         if (chartSpec) {
           const { requiredFields } = chartSpec;
           for (const requiredField of requiredFields) {
-            if (!chart.fieldMapping[requiredField]) {
+            if (!chart.fieldMapping?.[requiredField]) {
               errors.push(`必需字段 ${requiredField} 未映射`);
             }
           }
@@ -191,13 +192,15 @@ export const useChartConfigStore = create<ChartConfigState>()(
       
       // 创建默认图表
       createDefaultChart: (type: ChartKind, title: string): ChartConfig => {
-        const id = `chart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
         return {
-          kind: type,
+          id: `chart_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          type: type,
+          title: title,
+          subtitle: '',
           mapping: {},
+          fieldMapping: undefined,
           style: {
-            title,
+            title: title,
             legend: true,
             label: false,
             colorScheme: 'default',

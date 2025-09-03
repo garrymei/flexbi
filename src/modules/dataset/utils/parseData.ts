@@ -1,6 +1,6 @@
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
-import { Field, DataRow } from '@/app/types';
+import { Field, DataRow, FieldType } from '@/app/types';
 
 export interface ParseResult {
   success: boolean;
@@ -34,7 +34,7 @@ const parseCSV = async (file: File): Promise<ParseResult> => {
           return;
         }
 
-        const fields = inferFields(results.data);
+        const fields = inferFields(results.data as DataRow[]);
         const rows = results.data as DataRow[];
 
         resolve({
@@ -123,8 +123,9 @@ const inferFields = (rows: DataRow[]): Field[] => {
   return fieldNames.map(name => {
     const type = inferFieldType(name, sampleRows);
     return {
+      key: name,
       name,
-      type,
+      type: type as FieldType,
       uniqueValues: countUniqueValues(name, sampleRows)
     };
   });

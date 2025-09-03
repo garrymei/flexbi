@@ -17,7 +17,7 @@ const DataUploader: React.FC<DataUploaderProps> = ({ onDataLoaded }) => {
     try {
       const result = await parseData(file);
       
-      if (result.success) {
+      if (result.success && result.fields && result.rows) {
         // 创建数据集对象
         const dataset = {
           id: `dataset_${Date.now()}`,

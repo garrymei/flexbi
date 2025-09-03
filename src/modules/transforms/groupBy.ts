@@ -1,4 +1,4 @@
-import { Field, DataRow } from '@/app/types';
+import { DataRow } from '@/app/types';
 
 export type AggregationFunction = 'sum' | 'avg' | 'min' | 'max' | 'count' | 'first' | 'last';
 
@@ -125,7 +125,7 @@ const calculateAggregations = (
 const calculateAggregation = (
   rows: DataRow[],
   field: string,
-  function: AggregationFunction
+  aggregationFunction: AggregationFunction
 ): any => {
   const values = rows
     .map(row => row[field])
@@ -135,7 +135,7 @@ const calculateAggregation = (
     return null;
   }
   
-  switch (function) {
+  switch (aggregationFunction) {
     case 'sum':
       return values.reduce((sum, val) => sum + Number(val), 0);
     

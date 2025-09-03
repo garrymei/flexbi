@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useChartConfigStore, useDatasetStore } from '@/store';
-import { ChartType, CHART_TYPES } from '@/app/config';
+import { CHART_TYPES } from '@/app/config';
+import { ChartType } from '@/app/types';
 import ChartConfigurator from './ChartConfigurator';
 import ChartPreview from './ChartPreview';
 
@@ -101,7 +102,7 @@ const ChartGallery: React.FC = () => {
                 
                 <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
                   <span>
-                    字段映射: {Object.keys(chart.fieldMapping).length} 个
+                                         字段映射: {chart.fieldMapping ? Object.keys(chart.fieldMapping).length : 0} 个
                   </span>
                   <span>
                     创建时间: {chart.id.split('_')[1] ? new Date(parseInt(chart.id.split('_')[1])).toLocaleTimeString() : '未知'}

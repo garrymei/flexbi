@@ -3,7 +3,7 @@ import { devtools } from 'zustand/middleware';
 import { UIState } from '@/app/types';
 import { DEFAULT_STYLES } from '@/app/config';
 
-interface UIStoreState extends UIState {
+export interface UIStoreState extends UIState {
   // 操作
   setTheme: (theme: 'light' | 'dark') => void;
   toggleTheme: () => void;

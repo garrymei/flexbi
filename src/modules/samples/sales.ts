@@ -1,33 +1,39 @@
-import { Field, DataRow } from '@/app/types';
+import { Field, DataRow, Dataset } from '@/app/types';
 
 // 销售数据字段定义
 export const salesFields: Field[] = [
   {
+    key: 'date',
     name: 'date',
     type: 'date',
     uniqueValues: 12
   },
   {
+    key: 'product',
     name: 'product',
     type: 'string',
     uniqueValues: 4
   },
   {
+    key: 'region',
     name: 'region',
     type: 'string',
     uniqueValues: 3
   },
   {
+    key: 'sales',
     name: 'sales',
     type: 'number',
     uniqueValues: 36
   },
   {
+    key: 'quantity',
     name: 'quantity',
     type: 'number',
     uniqueValues: 36
   },
   {
+    key: 'profit',
     name: 'profit',
     type: 'number',
     uniqueValues: 36
@@ -141,6 +147,17 @@ export const getSampleData = () => {
   };
 };
 
+// 销售数据演示集
+export const sampleSalesData: Dataset = {
+  id: 'sample_sales',
+  name: '销售数据演示',
+  fields: salesFields,
+  rows: salesData,
+  rowCount: salesData.length,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01'),
+};
+
 /**
  * 用户数据演示集
  */
@@ -149,42 +166,42 @@ export const sampleUserData: Dataset = {
   name: '用户数据演示',
   fields: [
     {
-      id: 'field_0',
+      key: 'user_id',
       name: '用户ID',
       type: 'string',
       uniqueValues: 100,
       sampleValues: ['U001', 'U002', 'U003'],
     },
     {
-      id: 'field_1',
+      key: 'age',
       name: '年龄',
       type: 'number',
       uniqueValues: 45,
       sampleValues: [25, 32, 28],
     },
     {
-      id: 'field_2',
+      key: 'gender',
       name: '性别',
       type: 'string',
       uniqueValues: 2,
       sampleValues: ['男', '女'],
     },
     {
-      id: 'field_3',
+      key: 'city',
       name: '城市',
       type: 'string',
       uniqueValues: 8,
       sampleValues: ['北京', '上海', '广州'],
     },
     {
-      id: 'field_4',
+      key: 'register_date',
       name: '注册时间',
       type: 'date',
       uniqueValues: 100,
       sampleValues: ['2023-01-15', '2023-03-20', '2023-06-10'],
     },
     {
-      id: 'field_5',
+      key: 'activity',
       name: '活跃度',
       type: 'number',
       uniqueValues: 100,

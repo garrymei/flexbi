@@ -1,12 +1,13 @@
-import { Field, Dataset } from '@/app/types';
+import { Dataset } from '@/app/types';
 
 // 场景1: 时间序列 + 数值 + 分类（用于 line/area/bar）
 export const salesData: Dataset = {
+  id: 'sales_data',
   name: '销售数据',
   fields: [
-    { key: 'date', type: 'date', uniqueValues: 12 },
-    { key: 'sales', type: 'number', uniqueValues: 50 },
-    { key: 'region', type: 'string', uniqueValues: 4 }
+    { key: 'date', name: 'date', type: 'date', uniqueValues: 12 },
+    { key: 'sales', name: 'sales', type: 'number', uniqueValues: 50 },
+    { key: 'region', name: 'region', type: 'string', uniqueValues: 4 }
   ],
   rows: [
     { date: '2024-01', sales: 1200, region: '华东' },
@@ -33,15 +34,19 @@ export const salesData: Dataset = {
     { date: '2024-06', sales: 1400, region: '华北' },
     { date: '2024-06', sales: 1200, region: '华南' },
     { date: '2024-06', sales: 1700, region: '西部' }
-  ]
+  ],
+  rowCount: 24,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01')
 };
 
 // 场景2: 仅分类 + 数值（pie）
 export const productData: Dataset = {
+  id: 'product_data',
   name: '产品销量',
   fields: [
-    { key: 'product', type: 'string', uniqueValues: 6 },
-    { key: 'sales', type: 'number', uniqueValues: 6 }
+    { key: 'product', name: 'product', type: 'string', uniqueValues: 6 },
+    { key: 'sales', name: 'sales', type: 'number', uniqueValues: 6 }
   ],
   rows: [
     { product: '笔记本电脑', sales: 1250 },
@@ -50,16 +55,20 @@ export const productData: Dataset = {
     { product: '智能手表', sales: 600 },
     { product: '耳机', sales: 950 },
     { product: '其他配件', sales: 400 }
-  ]
+  ],
+  rowCount: 6,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01')
 };
 
 // 场景3: 双数值（scatter）
 export const correlationData: Dataset = {
+  id: 'correlation_data',
   name: '相关性分析',
   fields: [
-    { key: 'age', type: 'number', uniqueValues: 20 },
-    { key: 'income', type: 'number', uniqueValues: 20 },
-    { key: 'education', type: 'string', uniqueValues: 3 }
+    { key: 'age', name: 'age', type: 'number', uniqueValues: 20 },
+    { key: 'income', name: 'income', type: 'number', uniqueValues: 20 },
+    { key: 'education', name: 'education', type: 'string', uniqueValues: 3 }
   ],
   rows: [
     { age: 25, income: 35000, education: '本科' },
@@ -82,7 +91,10 @@ export const correlationData: Dataset = {
     { age: 50, income: 90000, education: '博士' },
     { age: 52, income: 95000, education: '博士' },
     { age: 55, income: 100000, education: '博士' }
-  ]
+  ],
+  rowCount: 20,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-12-01')
 };
 
 // 获取所有示例数据

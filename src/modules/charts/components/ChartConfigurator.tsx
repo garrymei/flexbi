@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useDatasetStore, useChartConfigStore } from '@/store';
-import { ChartKind, Field, Mapping } from '@/app/types';
+import { useDatasetStore } from '@/store';
+import { ChartKind, Mapping } from '@/app/types';
 import { CHART_TYPES } from '@/app/config';
 
 interface ChartConfiguratorProps {
@@ -15,7 +15,7 @@ const ChartConfigurator: React.FC<ChartConfiguratorProps> = ({
   onCancel,
 }) => {
   const { currentDataset } = useDatasetStore();
-  const { createDefaultChart } = useChartConfigStore();
+  // const { createDefaultChart } = useChartConfigStore(); // 暂时注释掉未使用的函数
   
   const [title, setTitle] = useState('');
   const [fieldMapping, setFieldMapping] = useState<Mapping>({});

@@ -1,15 +1,14 @@
 import React from 'react';
 import { useDatasetStore } from '@/store';
-import { Field, DataRow } from '@/app/types';
 
 interface DataTableProps {
   maxRows?: number;
 }
 
 const DataTable: React.FC<DataTableProps> = ({ maxRows = 100 }) => {
-  const { fields, rows } = useDatasetStore();
+  const { currentDataset } = useDatasetStore();
   
-  if (!fields || fields.length === 0) {
+  if (!currentDataset || !currentDataset.fields || currentDataset.fields.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
         暂无数据，请先上传文件
@@ -17,6 +16,7 @@ const DataTable: React.FC<DataTableProps> = ({ maxRows = 100 }) => {
     );
   }
 
+  const { fields, rows } = currentDataset;
   const displayRows = rows.slice(0, maxRows);
   const hasMore = rows.length > maxRows;
 

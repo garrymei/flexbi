@@ -20,7 +20,7 @@ export async function inferSchema(data: any[][]): Promise<Field[]> {
     const sampleValues = columnData.slice(0, 5); // 取前5个值作为样本
 
     return {
-      id: `field_${index}`,
+      key: `field_${index}`,
       name: header || `字段${index + 1}`,
       type: fieldType,
       uniqueValues,
@@ -164,7 +164,7 @@ export function getFieldStats(values: any[], fieldType: FieldType) {
       return {
         uniqueValues: Object.keys(valueCounts).length,
         mostCommon: Object.entries(valueCounts)
-          .sort(([, a], [, b]) => b - a)
+          .sort(([, a], [, b]) => (b as number) - (a as number))
           .slice(0, 5),
         count: validValues.length,
       };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDatasetStore, useChartConfigStore } from '@/store';
-import { ChartKind, Dataset } from '@/app/types';
+import { ChartKind } from '@/app/types';
 import { getAllSampleData, getSampleDataByName } from '@/modules/samples/validationData';
 import { getAllChartKinds, suggestChartsForDataset } from '@/modules/charts/registry';
 import DataUploader from '@/modules/dataset/components/DataUploader';
@@ -252,7 +252,7 @@ const ValidationTest: React.FC = () => {
                               {chart.style?.title || `图表 ${index + 1}`}
                             </span>
                             <span className="ml-2 text-xs text-gray-500 capitalize">
-                              ({chart.kind})
+                              ({chart.type})
                             </span>
                           </div>
                           <div className="text-xs text-gray-500">

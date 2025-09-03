@@ -12,7 +12,7 @@ const ChartPreview: React.FC<ChartPreviewProps> = ({ chart }) => {
   // 检查图表是否配置完整
   const isConfigured = () => {
     const requiredFields = chartConfig.requiredFields;
-    return requiredFields.every(field => chart.fieldMapping[field]);
+    return requiredFields.every(field => chart.fieldMapping?.[field]);
   };
 
   if (!isConfigured()) {
@@ -38,7 +38,7 @@ const ChartPreview: React.FC<ChartPreviewProps> = ({ chart }) => {
           <h6 className="font-medium text-gray-900 mb-1">{chart.title}</h6>
           <p className="text-sm text-gray-500">{chartConfig.name}</p>
           <div className="mt-2 text-xs text-gray-400">
-            字段映射: {Object.keys(chart.fieldMapping).length} 个
+                         字段映射: {chart.fieldMapping ? Object.keys(chart.fieldMapping).length : 0} 个
           </div>
         </div>
       </div>
@@ -47,7 +47,7 @@ const ChartPreview: React.FC<ChartPreviewProps> = ({ chart }) => {
       <div className="space-y-2">
         <h6 className="text-sm font-medium text-gray-700">字段映射</h6>
         <div className="grid grid-cols-2 gap-2 text-xs">
-          {Object.entries(chart.fieldMapping).map(([role, fieldId]) => (
+          {chart.fieldMapping && Object.entries(chart.fieldMapping).map(([role, fieldId]) => (
             <div key={role} className="flex justify-between">
               <span className="text-gray-500">{role}:</span>
               <span className="text-gray-900 font-medium">{fieldId}</span>

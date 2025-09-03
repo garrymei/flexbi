@@ -107,7 +107,7 @@ export function safeGet<T, K extends keyof T>(obj: T, key: K): T[K] | undefined 
 /**
  * 类型安全的属性设置
  */
-export function safeSet<T, K extends keyof T>(obj: T, key: K, value: T[K]): void {
+export function safeSet<T extends Record<string, any>, K extends keyof T>(obj: T, key: K, value: T[K]): void {
   if (obj && key in obj) {
     obj[key] = value;
   }

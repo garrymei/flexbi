@@ -4,20 +4,29 @@ export type FieldType = 'number' | 'string' | 'date' | 'boolean';
 // 字段定义
 export interface Field {
   key: string;
+  name: string;
   type: FieldType;
   uniqueValues?: number;
   sampleValues?: any[];
 }
 
+// 数据行类型
+export type DataRow = Record<string, any>;
+
 // 数据集
 export interface Dataset {
+  id: string;
   name: string;
   fields: Field[];
-  rows: Record<string, any>[]; // 解析后的行
+  rows: DataRow[];
+  rowCount: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // 图表类型
 export type ChartKind = 'line' | 'bar' | 'area' | 'scatter' | 'pie' | 'radar';
+export type ChartType = ChartKind;
 
 // 字段映射
 export interface Mapping {
@@ -27,10 +36,17 @@ export interface Mapping {
   value?: string;      // pie/radar
 }
 
+// 字段角色
+export type FieldRole = 'x' | 'y' | 'series' | 'value';
+
 // 图表配置
 export interface ChartConfig {
-  kind: ChartKind;
+  id: string;
+  type: ChartKind;
+  title: string;
+  subtitle?: string;
   mapping: Mapping;
+  fieldMapping?: Record<FieldRole, string>; // 字段映射
   style?: {
     title?: string;
     legend?: boolean;

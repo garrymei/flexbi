@@ -3,7 +3,7 @@ import { devtools } from 'zustand/middleware';
 import { Dataset, Field, FieldType } from '@/app/types';
 import { CONFIG } from '@/app/config';
 
-interface DatasetState {
+export interface DatasetState {
   // 状态
   currentDataset: Dataset | null;
   isLoading: boolean;

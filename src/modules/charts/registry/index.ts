@@ -145,15 +145,9 @@ export const suggestChartsForDataset = (fields: Field[]): ChartKind[] => {
   const suggestions: Array<{ kind: ChartKind; score: number }> = [];
   
   // 统计字段类型
-  const fieldTypes = fields.reduce((acc, field) => {
-    acc[field.type] = (acc[field.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
   const stringFields = fields.filter(f => f.type === 'string');
   const numberFields = fields.filter(f => f.type === 'number');
   const dateFields = fields.filter(f => f.type === 'date');
-  const booleanFields = fields.filter(f => f.type === 'boolean');
 
   // 计算每种图表的适用性得分
   Object.values(chartRegistry).forEach(chart => {
@@ -228,7 +222,7 @@ export const isDatasetSuitableForChart = (
   if (!spec) return false;
 
   // 检查必需字段
-  for (const [role, requiredTypes] of Object.entries(spec.fieldTypes)) {
+  for (const [, requiredTypes] of Object.entries(spec.fieldTypes)) {
     if (requiredTypes && requiredTypes.length > 0) {
       const hasSuitableField = fields.some(field => 
         requiredTypes.includes(field.type)

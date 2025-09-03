@@ -1,7 +1,7 @@
 import { saveAs } from 'file-saver';
-import { Field, DataRow } from '@/app/types';
+import { Field, DataRow, Mapping } from '@/app/types';
 import { ChartKind } from '../registry';
-import { toEChartsOption, FieldMapping, ChartStyle } from '../adapters/echarts/toOption';
+import { toEChartsOption } from '../adapters/echarts/toOption';
 
 export interface ExportOptions {
   format: 'png' | 'svg';
@@ -19,8 +19,8 @@ export const exportChart = async (
   fields: Field[],
   rows: DataRow[],
   chartKind: ChartKind,
-  mapping: FieldMapping,
-  style?: ChartStyle,
+  mapping: Mapping,
+  style?: any,
   options: ExportOptions = { format: 'png' }
 ): Promise<void> => {
   try {
@@ -35,11 +35,11 @@ export const exportChart = async (
     const finalFilename = filename || defaultFilename;
 
     // 获取ECharts配置
-    const echartsOption = toEChartsOption(fields, rows, {
-      kind: chartKind,
+    toEChartsOption(fields, rows, {
+      type: chartKind,
       mapping,
       style
-    });
+    } as any);
 
     // 设置图表尺寸
     chartRef.resize({ width, height });
@@ -107,8 +107,8 @@ export const exportMultipleCharts = async (
     fields: Field[];
     rows: DataRow[];
     kind: ChartKind;
-    mapping: FieldMapping;
-    style?: ChartStyle;
+    mapping: Mapping;
+    style?: any;
     name: string;
   }>,
   options: ExportOptions
@@ -144,8 +144,8 @@ export const exportAsZip = async (
     fields: Field[];
     rows: DataRow[];
     kind: ChartKind;
-    mapping: FieldMapping;
-    style?: ChartStyle;
+    mapping: Mapping;
+    style?: any;
     name: string;
   }>,
   options: ExportOptions

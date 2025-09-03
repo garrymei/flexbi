@@ -1,30 +1,7 @@
-import { Field, DataRow } from '@/app/types';
-import { ChartKind } from '../../registry';
+import { Field, DataRow, ChartConfig, Mapping } from '@/app/types';
 import { getDefaultColors } from './colors';
 
-export interface FieldMapping {
-  x?: string;
-  y?: string;
-  series?: string;
-  category?: string;
-  value?: string;
-  dimension?: string;
-}
-
-export interface ChartStyle {
-  title?: string;
-  subtitle?: string;
-  showLegend?: boolean;
-  showDataLabels?: boolean;
-  colorScheme?: string;
-  gridMargin?: number;
-}
-
-export interface ChartConfig {
-  kind: ChartKind;
-  mapping: FieldMapping;
-  style?: ChartStyle;
-}
+// 使用从 @/app/types 导入的类型
 
 /**
  * 将数据集和配置转换为ECharts配置
@@ -34,23 +11,23 @@ export const toEChartsOption = (
   rows: DataRow[],
   config: ChartConfig
 ): any => {
-  const { kind, mapping, style } = config;
+  const { type, mapping, style } = config;
   
-  switch (kind) {
-    case ChartKind.LINE:
+  switch (type) {
+    case 'line':
       return createLineChartOption(fields, rows, mapping, style);
-    case ChartKind.BAR:
+    case 'bar':
       return createBarChartOption(fields, rows, mapping, style);
-    case ChartKind.AREA:
+    case 'area':
       return createAreaChartOption(fields, rows, mapping, style);
-    case ChartKind.SCATTER:
+    case 'scatter':
       return createScatterChartOption(fields, rows, mapping, style);
-    case ChartKind.PIE:
+    case 'pie':
       return createPieChartOption(fields, rows, mapping, style);
-    case ChartKind.RADAR:
+    case 'radar':
       return createRadarChartOption(fields, rows, mapping, style);
     default:
-      throw new Error(`不支持的图表类型: ${kind}`);
+      throw new Error(`不支持的图表类型: ${type}`);
   }
 };
 
@@ -58,10 +35,10 @@ export const toEChartsOption = (
  * 创建折线图配置
  */
 const createLineChartOption = (
-  fields: Field[],
+  _fields: Field[],
   rows: DataRow[],
-  mapping: FieldMapping,
-  style?: ChartStyle
+  mapping: Mapping,
+  style?: any
 ): any => {
   const { x, y, series } = mapping;
   if (!x || !y) throw new Error('折线图需要x和y字段');
@@ -89,7 +66,7 @@ const createLineChartOption = (
       bottom: style?.gridMargin || 60
     },
     xAxis: {
-      type: getAxisType(fields.find(f => f.name === x)?.type),
+      type: getAxisType(_fields.find(f => f.name === x)?.type),
       data: processedData.xAxisData
     },
     yAxis: {
@@ -111,10 +88,10 @@ const createLineChartOption = (
  * 创建柱状图配置
  */
 const createBarChartOption = (
-  fields: Field[],
+  _fields: Field[],
   rows: DataRow[],
-  mapping: FieldMapping,
-  style?: ChartStyle
+  mapping: Mapping,
+  style?: any
 ): any => {
   const { x, y, series } = mapping;
   if (!x || !y) throw new Error('柱状图需要x和y字段');
@@ -164,10 +141,10 @@ const createBarChartOption = (
  * 创建面积图配置
  */
 const createAreaChartOption = (
-  fields: Field[],
+  _fields: Field[],
   rows: DataRow[],
-  mapping: FieldMapping,
-  style?: ChartStyle
+  mapping: Mapping,
+  style?: any
 ): any => {
   const { x, y, series } = mapping;
   if (!x || !y) throw new Error('面积图需要x和y字段');
@@ -195,7 +172,7 @@ const createAreaChartOption = (
       bottom: style?.gridMargin || 60
     },
     xAxis: {
-      type: getAxisType(fields.find(f => f.name === x)?.type),
+      type: getAxisType(_fields.find(f => f.name === x)?.type),
       data: processedData.xAxisData
     },
     yAxis: {
@@ -218,10 +195,10 @@ const createAreaChartOption = (
  * 创建散点图配置
  */
 const createScatterChartOption = (
-  fields: Field[],
+  _fields: Field[],
   rows: DataRow[],
-  mapping: FieldMapping,
-  style?: ChartStyle
+  mapping: Mapping,
+  style?: any
 ): any => {
   const { x, y, series } = mapping;
   if (!x || !y) throw new Error('散点图需要x和y字段');
@@ -273,16 +250,16 @@ const createScatterChartOption = (
  * 创建饼图配置
  */
 const createPieChartOption = (
-  fields: Field[],
+  _fields: Field[],
   rows: DataRow[],
-  mapping: FieldMapping,
-  style?: ChartStyle
+  mapping: Mapping,
+  style?: any
 ): any => {
-  const { category, value } = mapping;
-  if (!category || !value) throw new Error('饼图需要category和value字段');
+  const { x, value } = mapping;
+  if (!x || !value) throw new Error('饼图需要x和value字段');
 
   const colors = getDefaultColors();
-  const processedData = processDataForPie(rows, category, value);
+  const processedData = processDataForPie(rows, x, value);
   
   return {
     title: {
@@ -301,7 +278,7 @@ const createPieChartOption = (
       top: 'middle'
     },
     series: [{
-      name: category,
+      name: x,
       type: 'pie',
       radius: '50%',
       data: processedData.map((item, index) => ({
@@ -323,16 +300,16 @@ const createPieChartOption = (
  * 创建雷达图配置
  */
 const createRadarChartOption = (
-  fields: Field[],
+  _fields: Field[],
   rows: DataRow[],
-  mapping: FieldMapping,
-  style?: ChartStyle
+  mapping: Mapping,
+  style?: any
 ): any => {
-  const { dimension, value, series } = mapping;
-  if (!dimension || !value) throw new Error('雷达图需要dimension和value字段');
+  const { x, value, series } = mapping;
+  if (!x || !value) throw new Error('雷达图需要x和value字段');
 
   const colors = getDefaultColors();
-  const processedData = processDataForRadar(rows, dimension, value, series);
+  const processedData = processDataForRadar(rows, x, value, series);
   
   return {
     title: {
